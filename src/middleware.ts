@@ -6,11 +6,7 @@ export async function middleware(request: NextRequest) {
 
     const { pathname } = request.nextUrl;
 
-    if (pathname.includes("/api/auth") || token) {
-        return NextResponse.next();
-    }
-
-    if (!token && pathname !== '/login') {
+    if (!token && pathname !== '/login' && !pathname.includes("/_next/")) {
         return NextResponse.rewrite(new URL('/login', request.url));
-    }
+      }
 }
