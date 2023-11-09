@@ -12,20 +12,33 @@ import useSpotify from "@/hooks/useSpotify";
 import SpotifyWebApi from "spotify-web-api-node";
 
 const Sidebar = () => {
+  const spotifyApi: SpotifyWebApi = useSpotify();
+  const { data: session, status } = useSession();
+  const [playlists, setPlaylists] = useState<Array<{ name: string }>>([]);
 
-    const spotifyApi: SpotifyWebApi = useSpotify();
-    const { data: session, status } = useSession();
-    const [playlists, setPlaylists] = useState<Array<{ name: string }>>([]);
+  console.log(spotifyApi.getAccessToken());
 
-    useEffect(() => {
-      if(spotifyApi.getAccessToken()) {
-        spotifyApi.getUserPlaylists().then(({data}: any) => {
-          setPlaylists(data.body.items);
+  useEffect(() => {
+    if (status === 'authenticated') {
+      spotifyApi
+        .getUserPlaylists()
+        .then(({ data }: any) => {
+          console.log(data); // Log the response data
+          if (data && data.body && Array.isArray(data.body.items)) {
+            setPlaylists(data.body.items);
+          } else {
+            console.error("Unexpected data format");
+          }
         })
-      }
-    }, [session, spotifyApi]);
+        .catch((error) => {
+          console.error("Error fetching playlists", error);
+        });
+    } else {
+      console.error("No access token");
+    }
+  }, [session, spotifyApi, status]);
 
-    console.log(playlists);
+  console.log(playlists);
 
   return (
     <div className="text-gray-500 p-5 text-sm border-r border-gray-900 overflow-y-scroll h-screen scrollbar-hide">
@@ -34,7 +47,7 @@ const Sidebar = () => {
           className="flex items-center space-x-2 hover:text-white"
           onClick={() => signOut()}
         >
-        Log out
+          Log out
         </button>
 
         <button className="flex items-center space-x-2 hover:text-white">
@@ -73,9 +86,10 @@ const Sidebar = () => {
         {/* Playlist */}
 
         {playlists.map((playlist: any) => (
-          <p key={playlist.id} className="cursor-pointer hover:text-white">{playlist.name}</p>
+          <p key={playlist.id} className="cursor-pointer hover:text-white">
+            {playlist.name}
+          </p>
         ))}
-
       </div>
     </div>
   );
